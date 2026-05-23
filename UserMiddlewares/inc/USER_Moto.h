@@ -63,7 +63,7 @@ typedef struct
 typedef struct
 {
 		uint16_t mode;          // 电机控制模式
-    motor_fbpara_t para;  	// 电机的反馈信息结构体
+    	motor_fbpara_t para;  	// 电机的反馈信息结构体
 	
 		float totalAngle;				//电机旋转总角度 单位°
 		float lastAngle;				//电机上一时刻角度 单位°

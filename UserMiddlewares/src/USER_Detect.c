@@ -2,7 +2,7 @@
 #include "bsp_can.h"
 #include "UserFreertos.h"
 #include "Beep.h"
-#include "judge.h"
+#include "Judge.h"
 #include "USER_B2B.h"
 
 /****内部函数声明****/

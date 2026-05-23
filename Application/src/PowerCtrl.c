@@ -1,4 +1,5 @@
 #include "PowerCtrl.h"
+#include "PID.h"
 #include "main.h"
 #include "arm_math.h"
 #include "math.h"
@@ -6,10 +7,14 @@
 #include "moto.h"
 #include "Judge.h"
 
-uint16_t SET_WHEELSPEED_MAX = 8000;
-
 ChassisPower turn_power;
 ChassisPower whell_power;
+PID buffer_pid;
+
+uint16_t SET_WHEELSPEED_MAX = 8000;
+uint16_t chassis_power_buffer = 0;
+uint16_t set_buffer = 0;
+
 void PowerInit4310()
 {
 	turn_power.toque_coefficient = 1.0;
@@ -21,7 +26,7 @@ void PowerInit4310()
 	turn_power.transVector[1][1] = 1e-11;   // Torque
 	turn_power.transVector[2][2] = 2.5e-5;  // constant
 	turn_power.moto_type = 4310;
-	turn_power.UserPowerLimit = 100; 	//60
+	turn_power.UserPowerLimit = 50; 	//舵电机功率上限
 }
 
 void PowerInit3508()
@@ -35,7 +40,7 @@ void PowerInit3508()
 	whell_power.transVector[1][1] = 2.5e-15;   // Torque
 	whell_power.transVector[2][2] = 0.000025;  // constant
 	whell_power.moto_type = 3508;
-	whell_power.UserPowerLimit = 50;	//120
+	whell_power.UserPowerLimit = 100;	//底盘总功率
 }
 
 void PowerCtralInit()
@@ -43,6 +48,7 @@ void PowerCtralInit()
 	PowerInit4310();
 	PowerControl_AutoUpdateParamInit(&turn_power);//动态拟合初始化
 	PowerInit3508();
+	PID_Init(&buffer_pid, 3, 0, 0, 0, 200); 
 //	PowerControl_AutoUpdateParamInit(&chassis_power->Dj3508Power);
 }
 
@@ -127,9 +133,11 @@ void TurnPowerCtral()
 	for(uint8_t i=0;i<4;i++)
 	{
 		LIMIT(chassis.J4310[i].PD_Ctrl.outputTorque,-7,7);
-		turn_power.output += chassis.J4310[i].PD_Ctrl.outputTorque;
 	}
-	
+	if(turn_power.InitialTotalPower > turn_power.UserPowerLimit)
+		turn_power.output = turn_power.UserPowerLimit;
+	else
+		turn_power.output = turn_power.InitialTotalPower;
 }
 
 //轮电机功率控制
@@ -148,12 +156,30 @@ void WhellPowerCtral()
 	whell_power.PredictPower = 0;
 	
 	//读取最大功率
-	//whell_power.MaxPowerLimit = JUDGE_GetChassisPowerLimit();
-	//chassis_power_buffer = JUDGE_GetPowerBuffer();
-//	if (whell_power.MaxPowerLimit < 15 || whell_power.MaxPowerLimit > 200)
-//	{
+	whell_power.MaxPowerLimit = JUDGE_GetChassisPowerLimit();
+	chassis_power_buffer = JUDGE_GetPowerBuffer();
+	switch (USER_SentryCmd.sentry_mode)
+	{
+		case 1: //进攻
+			whell_power.MaxPowerLimit = 50;
+			break;
+		case 2: //防守
+			whell_power.MaxPowerLimit = 50;
+			break;
+		case 3: //移动
+			whell_power.MaxPowerLimit = 150;
+			break;
+		default:
+			whell_power.MaxPowerLimit = JUDGE_GetChassisPowerLimit();
+			break;
+	}
+	if (whell_power.MaxPowerLimit < 15 || whell_power.MaxPowerLimit > 200)
+	{
 		whell_power.MaxPowerLimit = whell_power.UserPowerLimit;
-	//}
+		set_buffer = 0;
+		chassis_power_buffer = 0;
+	}
+
 	
 	//拟合曲线用
 	for (uint8_t i = 0;i<4;i++)
@@ -176,8 +202,10 @@ void WhellPowerCtral()
 																			whell_power.a * chassis.M3508[i].speedPID.output*chassis.M3508[i].speedPID.output + whell_power.constant;
 		whell_power.InitialTotalPower += whell_power.InitialGivePower[i];
 	}
+	// 缓冲能量pid
+	PID_SingleCalc(&buffer_pid, set_buffer, chassis_power_buffer);
 	//轮电机最大功率
-	whell_power.InputPower = whell_power.MaxPowerLimit - turn_power.output;
+	whell_power.InputPower = whell_power.MaxPowerLimit - turn_power.output-buffer_pid.output;
 	LIMIT(whell_power.InputPower,5, whell_power.MaxPowerLimit+20);
 	float modelPower = fmax(whell_power.MaxPowerLimit,whell_power.InputPower);
 	float delta = TOQUE_CONST * whell_power.toque_coefficient * TOQUE_CONST * whell_power.toque_coefficient - 4 * whell_power.k2 * whell_power.constant + whell_power.k2 * modelPower - 4 * whell_power.a * whell_power.k2 * TOQUE_CONST;
@@ -237,20 +265,5 @@ void WhellPowerCtral()
 void PowerCtrl()
 {
 	TurnPowerCtral();
-	switch (USER_SentryCmd.sentry_mode)
-	{
-		case 1: //进攻
-			whell_power.UserPowerLimit = 50 - turn_power.PredictPower;
-			break;
-		case 2: //防守
-			whell_power.UserPowerLimit = 50 - turn_power.PredictPower;
-			break;
-		case 3: //移动
-			whell_power.UserPowerLimit = 150 - turn_power.PredictPower;
-			break;
-		default:
-			whell_power.UserPowerLimit = GameRobotState.chassis_power_limit - turn_power.PredictPower;
-			break;
-	}
 	WhellPowerCtral();
 }

@@ -3,7 +3,7 @@
 #include "cmsis_os.h"
 #include "UserFreertos.h"
 #include "Moto.h"
-#include "judge.h"
+#include "Judge.h"
 #include "USER_Detcet.h"
 #include "imu_temp_ctrl.h"
 #include <string.h>
@@ -47,7 +47,7 @@ void B2B_ParseUsart() // 先发低字节
 				p[2] = usart2RxBuf[3 + 4*i];
 				p[3] = usart2RxBuf[4 + 4*i];
 				chassis.J4310[i].targetTurnAngle = v;
-		} //解析舵电机目标角度（多圈）1-16
+		} //解析舵电机误差角度1-16
 		for (uint8_t i = 0; i < 4; i++)
 		{
 				chassis.M3508[i].targetSpeed = (int16_t)usart2RxBuf[17 + i * 2] | (int16_t)usart2RxBuf[17 + i * 2 + 1] << 8;
@@ -62,7 +62,7 @@ void B2B_ParseUsart() // 先发低字节
 				gimbal.J4310_yaw.targetTorque = v;
 		}	//大yaw电机目标转矩 25-28
 
-		memcpy(&USER_SentryCmd, &usart2RxBuf[29], sizeof(USER_SentryCmd_t));
+		// memcpy(&USER_SentryCmd, &usart2RxBuf[29], sizeof(USER_SentryCmd_t));//29-35 哨兵自主决策裁判系统指令数据
 		
 		STOPFLAG = usart2RxBuf[62];
 		
@@ -77,7 +77,7 @@ void B2B_ParseUsart() // 先发低字节
 				txbuffer[2 + 4*i] = p[1];
 				txbuffer[3 + 4*i] = p[2];
 				txbuffer[4 + 4*i] = p[3];
-		}//1-16 舵电机当前角度（单圈）单位为°
+		}//1-16 舵电机当前角度（单圈）单位为° 
 		for (uint8_t i = 0; i < 4; i++)
 		{
 				txbuffer[17 + i * 2] = chassis.M3508[i].speed;

@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include "stdbool.h"
+#include <stdint.h>
 
 #define    JUDGE_DATA_ERROR      0
 #define    JUDGE_DATA_CORRECT    1
@@ -44,6 +45,15 @@ typedef enum
 	CRC8         = 4 //CRC8
 	
 }FrameHeaderOffset;
+
+/* 自定义帧头 */
+typedef struct __attribute__((packed)) //裁判系统帧头
+{
+	uint8_t  SOF;
+	uint16_t DataLength;
+	uint8_t  Seq;
+	uint8_t  CRC8;
+} xFrameHeader;
 
 /***************命令码ID********************/
 
@@ -122,25 +132,6 @@ typedef enum
 //	robot_interactive_data_t  	 			interactData;//数据段
 //	uint16_t		 						FrameTail;//帧尾
 //}ext_CommunatianData_t;
-
-
-/* 自定义帧头 */
-typedef struct __attribute__((packed)) //裁判系统帧头
-{
-	uint8_t  SOF;
-	uint16_t DataLength;
-	uint8_t  Seq;
-	uint8_t  CRC8;
-} xFrameHeader;
-
-typedef struct __attribute__((packed))
-{
-	uint16_t data_cmd_id;    
-	uint16_t send_ID;    
-	uint16_t receiver_ID;	
-	uint32_t 		sentry_cmd;
-}sentry_cmd_t;
-
 
 
 /* ID: 0x0001  Byte:  11    比赛状态数据 */
@@ -330,14 +321,23 @@ typedef struct __attribute__((packed))
 
 /* ID: 0x020D  Byte:  6    哨兵机器人当前状态数据 */
 typedef struct __attribute__((packed))
-
 {
 	uint32_t sentry_info;
 	uint16_t sentry_info_2;
-}sentry_info_t;
+}ext_sentry_info_t;
 
+/* ID: 0x0303  Byte: 12  选手端发送地图位置数据 */
+typedef struct __attribute__((packed))
+{
+	float target_position_x;  	//目标x轴位置
+	float target_position_y;  	//目标y轴位置
+	uint8_t cmd_keyboard;		//云台手按下键盘通用键值 无则为0
+	uint8_t target_robot_id;	//目标机器人ID 发送坐标数据时为0
+	uint16_t cmd_source;		//信息来源的ID 0x0106为红方云台手选手端 ，0x016A为蓝方云台手选手端，其余为其他来源
+}map_command_t;
+
+/*以下为通过裁判系统给其他机器人发送/接受 以及给裁判系统发送数据*/
 /* 
-	
 	交互数据，包括一个统一的数据段头结构，
 	包含了内容 ID，发送者以及接受者的 ID 和内容数据段，
 	整个交互数据的包总共长最大为 128 个字节，
@@ -366,38 +366,37 @@ typedef struct __attribute__((packed))
 	0x0113/0x0114/0x0115，操作手客户端步兵(蓝)；
 	0x0116，空中操作手客户端(蓝)。 
 */
-/* 交互数据接收信息：0x0301  */
-typedef struct __attribute__((packed))
-	//2026.3.14修改
-{ 
-	uint16_t data_cmd_id;    
-	uint16_t send_ID;    
-	uint16_t receiver_ID; 
-} ext_student_interactive_header_data_t; 
+
+/* 机器人交互数据接收信息：0x0301  */
 /* 
-	学生机器人间通信 cmd_id 0x0301，内容 ID:0x0200~0x02FF
+	学生机器人间通信 cmd_id 0x0301，子内容 ID:0x0200~0x02FF
 	交互数据 机器人间通信：0x0301。
 	发送频率：上限 10Hz  
 
 	字节偏移量 	大小 	说明 			备注 
-	0 			2 		数据的内容 ID 	0x0200~0x02FF 
-										可以在以上 ID 段选取，具体 ID 含义由参赛队自定义 
+	0 			2 		子内容 ID 		0x0200~0x02FF  
+										可以在以上 ID 段选取，具体 ID 含义由参赛队自定义 机器人之间通信 
+										0x0100 选手端删除图层 0x0101-0x0105 UI画图形 0x0110 UI画字符图形 0x120 哨兵自主决策 0x121 雷达自主决策
 	
-	2 			2 		发送者的 ID 	需要校验发送者的 ID 正确性， 
-	
+	2 			2 		发送者的 ID 	需要校验发送者的 ID 正确性， 机器人ID编号如下所示：
+
 	4 			2 		接收者的 ID 	需要校验接收者的 ID 正确性，
 										例如不能发送到敌对机器人的ID 
-	
-	6 			n 		数据段 			n 需要小于 113 
+	ID如下：
+	1：红方英雄机器人	2：红方工程机器人	3/4/5：红方步兵机器人（与机器人ID3~5对应）		6：红方空中机器人	7：红方哨兵机器人	8：红方飞镖   9：红方雷达	10：红方前哨站	11：红方基地
+	101：蓝方英雄机器人	102：蓝方工程机器人	103/104/105：蓝方步兵机器人（与机器人ID3~5对应）106：蓝方空中机器人	107：蓝方哨兵机器人	108：蓝方飞镖 109：蓝方雷达	110：蓝方前哨站	111：蓝方基地
+	0x8080 裁判系统服务器
+
+	6 			n 		数据段 			n 需要小于 112
 
 */
 typedef struct __attribute__((packed))
-
-{ 
-	uint8_t data[106]; //数据段,n需要小于113
-} robot_interactive_data_t;
-
-
+{
+	uint16_t data_cmd_id;
+	uint16_t send_ID;
+	uint16_t receiver_ID;
+	uint8_t data[4];
+} robot_interactive_data_t;  //很丑陋的烧饼专用data[4]
 
 //机器人交互信息
 typedef struct __attribute__((packed))
@@ -405,20 +404,26 @@ typedef struct __attribute__((packed))
 {
 	xFrameHeader   							txFrameHeader;//帧头
 	uint16_t								CmdID;//命令码
-	ext_student_interactive_header_data_t   dataFrameHeader;//数据段头结构
 	robot_interactive_data_t  	 			interactData;//数据段
 	uint16_t		 						FrameTail;//帧尾
 }ext_CommunatianData_t;
 
+/*以下为字内容ID*/
+/* ID: 0x0120  Byte: 4  哨兵机器人当前状态数据 */	
+typedef struct __attribute__((packed))
+{
+	uint32_t sentry_cmd;
+}ext_sentry_cmd_t;
 
-
-//裁判系统发送数据帧
+/*字内容ID结束*/
 typedef struct
 {
 	uint8_t data[JUDGE_MAX_TX_LENGTH];
 	uint16_t frameLength;
 }JudgeTxFrame;
 
+
+/*以下为自定义裁判系统内容*/
 typedef struct __attribute__((packed))
 {
 	uint8_t game_progress; // 当前比赛状态 0:未开始比赛 1:准备阶段 2:自检阶段 3:五秒倒计时 4:比赛中 5:比赛结算中
@@ -449,20 +454,35 @@ typedef struct __attribute__((packed))
 /***********以上为发给ai的**************/
 	uint16_t shooter_barrel_cooling_value;  // 冷却速度
 	uint16_t shooter_barrel_heat_limit; 		//热量限制
+	uint16_t shooter_id1_17mm_cooling_heat; //17mm枪口热量
 	uint8_t power_management_gimbal_output : 1;
 	uint8_t power_management_chassis_output : 1;
 	uint8_t power_management_shooter_output : 1;
-	uint16_t shooter_17mm_barrel_heat;			//剩余热量
 	float initial_speed;										//弹速
 	uint8_t self_color;
 }JudgeData_t;
 
+
+/*哨兵自主决策指令协议详细内容*/
+/*	bit0 0为确认不复活 即使读条完毕 1为确认复活 读条后立马复活
+	bit1 0为不买活 1为买活
+	bit2-12 哨兵回家买蛋买多少 开局为0 这个值只能单增
+	bit13-16 哨兵远程买蛋次数 开局为0 改这个就能买蛋 0到1买一次 1到2买一次 依此类推
+	bit17-20 哨兵远程买血次数 开局为0 改这个就能买血 0到1买一次 1到2买一次 依此类推
+	bit21-22 哨兵姿态切换 1进攻 2防御 3移动 默认为3移动 修改就能变姿态
+	bit23 是否确认开符 0为不开 1为确认开
+	bit24-31 保留
+*/
+
+
 typedef struct __attribute__((packed))
 {
-	uint8_t sentry_mode; //1为进攻 2为防守 3为移动
-	uint8_t energy_activation; //0为不激活 1为激活小符 2为激活大符 
-	uint8_t survive; //0为不买活 1为买活
-	uint8_t buy_bullet; //0为不买弹 1为买弹	//之后再说
+	uint8_t sentry_mode; //1为进攻 2为防守 3为移动 默认为3
+	uint8_t energy_activation; //0为不激活 1为激活小符 2为激活大符 激活小还是大和比赛开始时间有关
+	uint16_t buy_projectile; //哨兵要买多少发弹 开局为0 修改后烧饼在补血点就能兑换 只能单增 如0->100买100发 100->101买1发 依此类推
+	uint8_t buy_life; 	//0为不买活 1为买活
+	uint8_t remote_buy_blood;	//0到1为买一次 1到2为买一次 依此类推
+	uint8_t remote_buy_bullet; //0到1为买一次 1到2为买一次 依此类推
 }USER_SentryCmd_t; //哨兵机器人指令数据
 
 /****************函数声明***************/
@@ -494,11 +514,15 @@ void Task_Judge_Callback(void);
 void Judge_UartLostCallback(void);
 
 void Judge_Receive(void);
+
+void SentryCmd_Pack(USER_SentryCmd_t *user_cmd, ext_sentry_cmd_t *SentryCmd);
+
 /****************外部引用***************/
 extern ext_game_robot_pos_t			GameRobotPos;
 extern ext_shoot_data_t				ShootData;
 extern ext_game_robot_status_t		GameRobotState;
 extern JudgeData_t					USER_JudgeData;
 extern USER_SentryCmd_t				USER_SentryCmd;
+extern ext_power_heat_data_t		PowerHeatData;
 
 #endif //头文件
