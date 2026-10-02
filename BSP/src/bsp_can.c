@@ -7,46 +7,46 @@
 
 CanState can_state;
 
-/**************ÄÚ²¿¹¤¾ßº¯ÊıÉùÃ÷***********************/
+/**************å†…éƒ¨å·¥å…·å‡½æ•°å£°æ˜***********************/
 void CAN1_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata);
-//can1½ÓÊÕ
+//can1æ¥æ”¶
 void CAN2_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata);
-//can2½ÓÊÕ
+//can2æ¥æ”¶
 void CAN3_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata);
-//can3½ÓÊÕ
-/******************³õÊ¼»¯***************************/
-//can¹ıÂËÆ÷³õÊ¼»¯
+//can3æ¥æ”¶
+/******************åˆå§‹åŒ–***************************/
+//canè¿‡æ»¤å™¨åˆå§‹åŒ–
 
 void CAN_Init()
 {
-	FDCAN_FilterTypeDef filter;                   	//< ÉùÃ÷¾Ö²¿±äÁ¿ can¹ıÂËÆ÷½á¹¹Ìå
-	filter.IdType       = FDCAN_STANDARD_ID;       	//< idÉèÖÃÎª±ê×¼id
-	filter.FilterIndex  = 0;                      	//< ÉèÖµÉ¸Ñ¡Æ÷µÄ±àºÅ£¬±ê×¼idÑ¡Ôñ0-127
-	filter.FilterType   = FDCAN_FILTER_MASK;       	//< ÉèÖÃ¹¤×÷Ä£Ê½ÎªÑÚÂëÄ£Ê½
-	filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0; 	//< ½«¾­¹ı¹ıÂËµÄÊı¾İ´æ´¢µ½ fifo0
-	filter.FilterID1    = 0x00000000;                   	//< É¸Ñ¡Æ÷µÄid
+	FDCAN_FilterTypeDef filter;                   	//< å£°æ˜å±€éƒ¨å˜é‡ canè¿‡æ»¤å™¨ç»“æ„ä½“
+	filter.IdType       = FDCAN_STANDARD_ID;       	//< idè®¾ç½®ä¸ºæ ‡å‡†id
+	filter.FilterIndex  = 0;                      	//< è®¾å€¼ç­›é€‰å™¨çš„ç¼–å·ï¼Œæ ‡å‡†idé€‰æ‹©0-127
+	filter.FilterType   = FDCAN_FILTER_MASK;       	//< è®¾ç½®å·¥ä½œæ¨¡å¼ä¸ºæ©ç æ¨¡å¼
+	filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0; 	//< å°†ç»è¿‡è¿‡æ»¤çš„æ•°æ®å­˜å‚¨åˆ° fifo0
+	filter.FilterID1    = 0x00000000;                   	//< ç­›é€‰å™¨çš„id
 	filter.FilterID2    = 0x00000000;
 	
-	HAL_FDCAN_ConfigFilter(&hfdcan1, &filter);   //< ÅäÖÃ¹ıÂËÆ÷	
+	HAL_FDCAN_ConfigFilter(&hfdcan1, &filter);   //< é…ç½®è¿‡æ»¤å™¨	
 	HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT,FDCAN_REJECT,FDCAN_FILTER_REMOTE,FDCAN_FILTER_REMOTE);
-	HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);  // Ê¹ÄÜfifo0½ÓÊÕµ½ĞÂĞÅÏ¢ÖĞ¶Ï
+	HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);  // ä½¿èƒ½fifo0æ¥æ”¶åˆ°æ–°ä¿¡æ¯ä¸­æ–­
 	HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_BUS_OFF, 0);
 	HAL_FDCAN_ConfigFifoWatermark(&hfdcan1,FDCAN_CFG_RX_FIFO0, 1);
-	HAL_FDCAN_Start(&hfdcan1);                   //< Ê¹ÄÜcan
+	HAL_FDCAN_Start(&hfdcan1);                   //< ä½¿èƒ½can
 
-	HAL_FDCAN_ConfigFilter(&hfdcan2, &filter);   //< ÅäÖÃ¹ıÂËÆ÷	
+	HAL_FDCAN_ConfigFilter(&hfdcan2, &filter);   //< é…ç½®è¿‡æ»¤å™¨	
 	HAL_FDCAN_ConfigGlobalFilter(&hfdcan2, FDCAN_REJECT,FDCAN_REJECT,FDCAN_FILTER_REMOTE,FDCAN_FILTER_REMOTE);
 	HAL_FDCAN_ConfigFifoWatermark(&hfdcan2,FDCAN_CFG_RX_FIFO0, 1);
-	HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);  // Ê¹ÄÜfifo0½ÓÊÕµ½ĞÂĞÅÏ¢ÖĞ¶Ï
+	HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);  // ä½¿èƒ½fifo0æ¥æ”¶åˆ°æ–°ä¿¡æ¯ä¸­æ–­
 	HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_BUS_OFF, 0);
-	HAL_FDCAN_Start(&hfdcan2);                   //< Ê¹ÄÜcan
+	HAL_FDCAN_Start(&hfdcan2);                   //< ä½¿èƒ½can
 	
-	HAL_FDCAN_ConfigFilter(&hfdcan3, &filter);   //< ÅäÖÃ¹ıÂËÆ÷	
+	HAL_FDCAN_ConfigFilter(&hfdcan3, &filter);   //< é…ç½®è¿‡æ»¤å™¨	
 	HAL_FDCAN_ConfigGlobalFilter(&hfdcan3, FDCAN_REJECT,FDCAN_REJECT,FDCAN_FILTER_REMOTE,FDCAN_FILTER_REMOTE);
 	HAL_FDCAN_ConfigFifoWatermark(&hfdcan3,FDCAN_CFG_RX_FIFO0, 1);
-	HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);  // Ê¹ÄÜfifo0½ÓÊÕµ½ĞÂĞÅÏ¢ÖĞ¶Ï
+	HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);  // ä½¿èƒ½fifo0æ¥æ”¶åˆ°æ–°ä¿¡æ¯ä¸­æ–­
 	HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_BUS_OFF, 0);
-	HAL_FDCAN_Start(&hfdcan3);                   //< Ê¹ÄÜcan
+	HAL_FDCAN_Start(&hfdcan3);                   //< ä½¿èƒ½can
 }
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
@@ -100,13 +100,13 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         
 }
 
-//can1½ÓÊÕ½áÊøÖĞ¶Ï
+//can1æ¥æ”¶ç»“æŸä¸­æ–­
 void CAN1_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
 {
 	uint8_t whichMotor;
 	switch(rx_header->Identifier)
 	{
-		//Çı¶¯µç»ú
+		//é©±åŠ¨ç”µæœº
 		case 0x201:
 		case 0x202:
 		case 0x203:
@@ -130,14 +130,14 @@ void CAN1_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
 		}	
 		break;
 				
-		//Î´ÖªĞÅÏ¢
+		//æœªçŸ¥ä¿¡æ¯
 		default:
 		break;
 	}
 }
 
 
-////can2½ÓÊÕ½áÊøÖĞ¶Ï
+////can2æ¥æ”¶ç»“æŸä¸­æ–­
 void CAN2_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
 {
 	uint8_t whichMotor;
@@ -155,7 +155,7 @@ void CAN2_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
 			}
 			break;
 
-		//Î´ÖªĞÅÏ¢
+		//æœªçŸ¥ä¿¡æ¯
 		default:
 				break;
 	}
@@ -180,7 +180,7 @@ void CAN3_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
 }
 
 
-/********************Íâ²¿µ÷ÓÃº¯Êı*******************************/
+/********************å¤–éƒ¨è°ƒç”¨å‡½æ•°*******************************/
 void USER_CAN_Send(FDCAN_HandleTypeDef* hfdcan,int16_t StdId,uint8_t* tx_data)
 {
 	FDCAN_TxHeaderTypeDef tx_header;

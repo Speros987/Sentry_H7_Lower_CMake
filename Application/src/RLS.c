@@ -61,11 +61,11 @@
      {
          return power.paramVector[0][0] * Xsample[0][0] + power.paramVector[1][0] * Xsample[1][0] + power.paramVector[2][0] * Xsample[2][0];
      }
-    // x1Îª µç»úËÙ¶ÈÆ½·½ºÍ x2Îªµç»úµçÁ÷Æ½·½ºÍ x3 ÄâºÏ³£ÊıÏîÇëÊäÈëµç»úÊıÁ¿ yÎªÒò±äÁ¿¹¦ÂÊ  effctivePowerÎª»úĞµ¹¦ÂÊ
-    // Èç¹ûÊ¹ÓÃsetCurrent Çë±£Ö¤x2Óëµ±Ç°µç»úÊµ¼ÊµçÁ÷ÏàÍ¬ ²»Òª½«¹¦ÂÊ¿ØÖÆÇ°µÄµçÁ÷ÄÃ¹ıÀ´
-    Xsample[0][0] = x1; // µç»úËÙ¶ÈÆ½·½ºÍ
-    Xsample[1][0] = x2; // µç»úµçÁ÷Æ½·½ºÍ
-    Xsample[2][0] = x3; // ³£ÊıÏî
+    // x1ä¸º ç”µæœºé€Ÿåº¦å¹³æ–¹å’Œ x2ä¸ºç”µæœºç”µæµå¹³æ–¹å’Œ x3 æ‹Ÿåˆå¸¸æ•°é¡¹è¯·è¾“å…¥ç”µæœºæ•°é‡ yä¸ºå› å˜é‡åŠŸç‡  effctivePowerä¸ºæœºæ¢°åŠŸç‡
+    // å¦‚æœä½¿ç”¨setCurrent è¯·ä¿è¯x2ä¸å½“å‰ç”µæœºå®é™…ç”µæµç›¸åŒ ä¸è¦å°†åŠŸç‡æ§åˆ¶å‰çš„ç”µæµæ‹¿è¿‡æ¥
+    Xsample[0][0] = x1; // ç”µæœºé€Ÿåº¦å¹³æ–¹å’Œ
+    Xsample[1][0] = x2; // ç”µæœºç”µæµå¹³æ–¹å’Œ
+    Xsample[2][0] = x3; // å¸¸æ•°é¡¹
     Ysample[0][0] = y;  // detaP
     if (y > 1)
     {
@@ -88,6 +88,6 @@
         arm_mat_scale_f32(&transMatrix, 1.0f, &lastTransMatrix);
         arm_mat_sub_f32(&lastTransMatrix, &KAIN_M_XT_M_TRANSMatrix, &transMatrix);
     }
-    float deltaPower = power.paramVector[0][0] * Xsample[0][0] + power.paramVector[1][0] * Xsample[1][0] + power.paramVector[2][0] * Xsample[2][0]; // ºóÑéËğºÄ¹¦ÂÊ
+    float deltaPower = power.paramVector[0][0] * Xsample[0][0] + power.paramVector[1][0] * Xsample[1][0] + power.paramVector[2][0] * Xsample[2][0]; // åéªŒæŸè€—åŠŸç‡
     return deltaPower;
 }

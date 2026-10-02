@@ -43,7 +43,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern uint8_t usart2RxBuf[256]; // ����2������
+extern uint8_t usart2RxBuf[256]; // 串口2缓冲区
 extern uint8_t usart1RxBuf[JUDGE_MAX_RX_LENGTH];
 /* USER CODE END PV */
 
